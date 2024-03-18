@@ -1,0 +1,28 @@
+n_beads_choices = [1000, 4000, 10000, 40000, 80000, 200000, 240000, 320000, 400000, 640000]
+
+gpu_test = expand(
+    "output/result.gpu-test.{n_beads}.{machine}.txt",
+    n_beads=n_beads_choices,
+    machine=config['machine'],
+)
+
+rule all:
+    input:
+        lambda wildcards: gpu_test
+
+rule test_gpu:
+    output:
+        file="output/result.{mode}.{n_beads}.{machine}.txt",
+    benchmark:
+        repeat(
+            "benchmarks/result.{mode}.{n_beads}.{machine}.benchmark",
+            5,
+        )
+    run:
+        gpu_number = 0
+        output_folder = output.file.rstrip(".txt")
+        if wildcards.mode=="gpu-test":
+            shell("""
+            python polychrom-basic-sim.py {gpu_number} {wildcards.n_beads} {output_folder} > {output.file}
+                """)
+
