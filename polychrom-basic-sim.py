@@ -21,14 +21,18 @@ assert (
 
 N = int(sys.argv[2])  # N_monomers
 GPU = sys.argv[1]  # Number of GPUs
-folder = sys.argv[3]  # output folder name
+folder = sys.argv[3] if len(sys.argv)>=4 else None # output folder name
 unique_id = np.random.randint(1000000)  # random number to avoid overwriting
 
 folder = f"{folder}_id{unique_id}"
 
 print(f"Starting simultions in ... {folder}")
 
-reporter = HDF5Reporter(folder=folder, max_data_length=5, overwrite=True)
+if folder is not None:
+    reporter = [HDF5Reporter(folder=folder, max_data_length=5, overwrite=True)]
+else:
+    reporter = []
+    
 sim = simulation.Simulation(
     platform="CUDA",
     integrator="variableLangevin",
@@ -38,7 +42,7 @@ sim = simulation.Simulation(
     N=N,
     save_decimals=2,
     PBCbox=False,
-    reporters=[reporter],
+    reporters=reporter,
 )
 
 polymer = starting_conformations.grow_cubic(N, 100)
@@ -78,7 +82,8 @@ for _ in range(10):  # Do 10 blocks
     sim.do_block(100)  # Of 100 timesteps each. Data is saved automatically.
 sim.print_stats()  # In the end, print very simple statistics
 
-reporter.dump_data()  # always need to run in the end to dump the block cache to the disk
+if folder is not None:
+    reporter.dump_data()  # always need to run in the end to dump the block cache to the disk
 
 end = time.time()
 print("Simulation time:", end - start, "sec.")
