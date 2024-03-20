@@ -1,10 +1,10 @@
 # Example launch : snakemake --cores 1 --config machine=$HOSTNAME -s Snakefile_polychrom 
 
-n_beads_choices = [1000, 4000, 10000, 40000, 80000, 200000, 240000, 320000, 400000, 640000, 1280000, 2560000]
+n_beads_choices = [1000, 4000, 10000, 40000, 80000, 200000, 240000, 320000, 400000, 640000, 1280000, 2560000, 5120000]
 
-modes_compaction = ['constant_density', 'constant_box']
+modes_compaction = ['constant_density'] #, 'constant_box']
 
-backends = ['hoomd-no-writing'] # ['hoomd-no-writing', 'hoomd', 'openmm']
+backends = ['hoomd-dpd'] # ['hoomd-no-writing', 'hoomd', 'openmm', 'hoomd-dpd']
 
 gpu_test = expand(
     "output/result.gpu-test.{n_beads}.{machine}.{mode_compaction}.{backend}.txt",
@@ -24,7 +24,7 @@ rule test_gpu:
     benchmark:
         repeat(
             "benchmarks/result.{mode}.{n_beads}.{machine}.{mode_compaction}.{backend}.benchmark",
-            5,
+            3,
         )
     run:
         output_folder = output.file.rstrip(".txt")
@@ -55,7 +55,7 @@ rule test_gpu:
                     """)
 
         # Run HOOMD-polychrom with no storing of the intermediary data
-        else:
+        elif wildcards.backend=="hoomd-no-writing":
             gpu_number = 1
             if wildcards.mode_compaction=='constant_density':
                 shell("""
@@ -66,4 +66,15 @@ rule test_gpu:
                 python polychrom-hoomd-basic-sim.py --gpu-id {gpu_number} --n-monomers {wildcards.n_beads} --md-steps 100000 --step-size 1000 --box-size 100 &> {output.file}
                     """)
 
+        # Run HOOMD-polychrom with no storing of the intermediary data and DPD integrator
+        else: #if wildcards.backend=="hoomd-dpd":
+            gpu_number = 3
+            if wildcards.mode_compaction=='constant_density':
+                shell("""
+                python polychrom-hoomd-basic-sim.py --gpu-id {gpu_number} --n-monomers {wildcards.n_beads} --md-steps 100000 --step-size 1000 --density 0.2 --integrator dpd &> {output.file}
+                    """)
+            else:
+                shell("""
+                python polychrom-hoomd-basic-sim.py --gpu-id {gpu_number} --n-monomers {wildcards.n_beads} --md-steps 100000 --step-size 1000 --box-size 100 --integrator dpd &> {output.file}
+                    """)
 

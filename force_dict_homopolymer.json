@@ -24,6 +24,27 @@
                 }
             },
             "Type": "Polychrom"
-        }
+        },
+	"Attraction": {
+	    "Cutoff": 1.5,
+	    "Matrix": {
+	        "A": {
+	            "A": 0,
+	            "B": 0,
+	            "Binders": 0
+	        },
+	        "B": {
+	            "A": 0,
+	            "B": 0.05,
+	            "Binders": 0
+	        },
+	        "Binders": {
+	            "A": 0,
+	            "B": 0,
+	            "Binders": 0
+	        }
+	    },
+	    "Type": "Polychrom"
+	}
     }
 }
