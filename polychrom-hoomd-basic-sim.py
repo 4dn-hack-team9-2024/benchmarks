@@ -102,9 +102,17 @@ def test_hoomd(GPU, N, folder, n_steps, step_size, box_size, density, integrator
     angular_forces = forces.get_angular_forces(**force_dict)
     
     if integrator.lower()=='dpd':
+        # Set up DPD forces:
         dpd_forces = forces.get_dpd_forces(nl, **force_dict)
-        force_field = repulsion_forces + bonded_forces + angular_forces + dpd_forces
-        
+
+        # Set up the attraction forces:
+        neighbors_list = hoomd.md.nlist.Cell(buffer=0.4)
+        attraction_forces = forces.get_attraction_forces(
+                neighbors_list, **force_dict)
+
+        # Define full force_field
+        force_field = repulsion_forces + bonded_forces + angular_forces + dpd_forces + attraction_forces
+
         # Setup new DPD integrator
         nve = hoomd.md.methods.NVE(filter=hoomd.filter.All())
         dpd_integrator = hoomd.md.Integrator(dt=5e-3, methods=[nve], forces=force_field)
